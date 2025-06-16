@@ -34,6 +34,10 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>(
         builder.Configuration["Jwt:Secret"],
         builder.Configuration["Jwt:Issuer"],
         builder.Configuration["Jwt:Audience"]));
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<IInputService, InputService>(
+    sp => new InputService(Path.Combine(builder.Environment.WebRootPath, "uploads")));
 
 var jwtSecret = builder.Configuration["Jwt:Secret"];
 var issuer = builder.Configuration["Jwt:Issuer"];
