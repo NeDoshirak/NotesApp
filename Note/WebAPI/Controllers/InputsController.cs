@@ -22,7 +22,7 @@ public class InputsController : ControllerBase
     {
         try
         {
-            if (request.UserId <= 0 || string.IsNullOrEmpty(request.TextContent))
+            if (request.UserId == Guid.Empty || string.IsNullOrEmpty(request.Text))
                 throw new ArgumentException("Valid user ID and text content are required.");
 
             // Валидация геолокации
@@ -34,7 +34,7 @@ public class InputsController : ControllerBase
             var dto = new CreateInputDto
             {
                 UserId = request.UserId,
-                TextContent = request.TextContent,
+                Text = request.Text,
                 FileName = "text.txt",
                 Latitude = request.Latitude,
                 Longitude = request.Longitude
@@ -55,13 +55,12 @@ public class InputsController : ControllerBase
     {
         try
         {
-            if (request.UserId <= 0 || request.WavFile == null)
+            if (request.UserId == Guid.Empty || request.WavFile == null)
                 throw new ArgumentException("Valid user ID and WAV file are required.");
 
             if (!request.WavFile.FileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("Only WAV files are allowed.");
 
-            // Валидация геолокации
             if (request.Latitude.HasValue && (request.Latitude < -90 || request.Latitude > 90))
                 throw new ArgumentException("Latitude must be between -90 and 90 degrees.");
             if (request.Longitude.HasValue && (request.Longitude < -180 || request.Longitude > 180))

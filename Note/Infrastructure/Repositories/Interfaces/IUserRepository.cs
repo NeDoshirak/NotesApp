@@ -4,6 +4,6 @@ namespace Infrastructure.Repositories.Interfaces;
 
 public interface IUserRepository
 {
-    User? GetByUsername(string username);
+    User? GetByLogin(string login);
     User Create(User user);
 }

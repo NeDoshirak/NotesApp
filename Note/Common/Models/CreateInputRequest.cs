@@ -4,9 +4,9 @@ namespace Common.Models;
 
 public class CreateInputRequest
 {
-    public int UserId { get; set; }
-    public string? TextContent { get; set; }
+    public Guid UserId { get; set; }
+    public string? Text { get; set; }
     public IFormFile? WavFile { get; set; }
-    public double? Latitude { get; set; } 
-    public double? Longitude { get; set; } 
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }

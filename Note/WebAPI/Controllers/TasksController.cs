@@ -15,11 +15,11 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetAllTasks([FromQuery] int userId)
+    public IActionResult GetAllTasks([FromQuery] Guid userId)
     {
         try
         {
-            if (userId <= 0)
+            if (userId == Guid.Empty)
                 throw new ArgumentException("Invalid user ID.");
 
             var tasks = _taskService.GetAllTasks(userId);

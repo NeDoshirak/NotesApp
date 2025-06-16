@@ -22,17 +22,17 @@ public class AuthService : IAuthService
 
     public (UserDto User, string Token) Register(RegisterUserDto dto)
     {
-        if (dto == null || string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
-            throw new ArgumentException("Username and password are required.");
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Login) || string.IsNullOrWhiteSpace(dto.Password) || string.IsNullOrWhiteSpace(dto.Name))
+            throw new ArgumentException("Login, name, and password are required.");
 
-        var existingUser = _userRepository.GetByUsername(dto.Username);
+        var existingUser = _userRepository.GetByLogin(dto.Login);
         if (existingUser != null)
-            throw new ArgumentException($"Username '{dto.Username}' is already taken.");
+            throw new ArgumentException($"Login '{dto.Login}' is already taken.");
 
         var user = new User
         {
-            Username = dto.Username,
-            Email = dto.Email,
+            Login = dto.Login,
+            Name = dto.Name,
             PasswordHash = _passwordHasher.HashPassword(dto.Password)
         };
 
@@ -45,12 +45,12 @@ public class AuthService : IAuthService
 
     public (UserDto User, string Token) Login(LoginUserDto dto)
     {
-        if (dto == null || string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
-            throw new ArgumentException("Username and password are required.");
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Login) || string.IsNullOrWhiteSpace(dto.Password))
+            throw new ArgumentException("Login and password are required.");
 
-        var user = _userRepository.GetByUsername(dto.Username);
+        var user = _userRepository.GetByLogin(dto.Login);
         if (user == null || !_passwordHasher.VerifyPassword(dto.Password, user.PasswordHash))
-            throw new UserNotFoundException(dto.Username);
+            throw new UserNotFoundException(dto.Login);
 
         var userDto = MapToUserDto(user);
         var token = _jwtTokenService.GenerateToken(userDto);
@@ -62,9 +62,9 @@ public class AuthService : IAuthService
     {
         return new UserDto
         {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email
+            UserId = user.UserId,
+            Login = user.Login,
+            Name = user.Name
         };
     }
 }

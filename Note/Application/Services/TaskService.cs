@@ -14,7 +14,7 @@ public class TaskService : ITaskService
         _taskRepository = taskRepository ?? throw new ArgumentNullException(nameof(taskRepository));
     }
 
-    public List<TaskDto> GetAllTasks(int userId)
+    public List<TaskDto> GetAllTasks(Guid userId)
     {
         var tasks = _taskRepository.GetAllByUserId(userId);
         return tasks.Select(MapToTaskDto).ToList();
@@ -24,15 +24,14 @@ public class TaskService : ITaskService
     {
         return new TaskDto
         {
-            Id = task.Id,
+            TaskId = task.TaskId,
             UserId = task.UserId,
+            Name = task.Name,
             Text = task.Text,
             Category = task.Category,
             CreatedAt = task.CreatedAt,
             Location = task.Location,
-            IsCompleted = task.IsCompleted,
-            NotificationTime = task.NotificationTime,
-            NotificationLocation = task.NotificationLocation
+            DueTime = task.DueTime
         };
     }
 }

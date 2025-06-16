@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// ????????? CORS
+// Настройка CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -25,7 +25,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddSingleton(new DbConnectionFactory("Host=localhost;Port=5432;Database=notes_app;Username=postgres;Password=192837465qwe;"));
+// Убедитесь, что строка подключения соответствует вашей БД
+builder.Services.AddSingleton(new DbConnectionFactory("Host=localhost;Port=5432;Database=notes_app;Username=postgres;"));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -93,7 +94,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Notes Web API v1"));
 }
 
-app.UseCors("AllowAll"); 
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

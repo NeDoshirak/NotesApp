@@ -21,9 +21,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public IActionResult Register([FromBody] RegisterUserDto dto)
     {
-        if (string.IsNullOrEmpty(dto.Username) ||
-            string.IsNullOrEmpty(dto.Email) ||
-            string.IsNullOrEmpty(dto.Password))
+        if (string.IsNullOrEmpty(dto.Login) || string.IsNullOrEmpty(dto.Name) || string.IsNullOrEmpty(dto.Password))
         {
             return BadRequest("Все поля обязательны для заполнения");
         }
@@ -52,9 +50,9 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginUserDto dto)
     {
-        if (string.IsNullOrEmpty(dto.Username) || string.IsNullOrEmpty(dto.Password))
+        if (string.IsNullOrEmpty(dto.Login) || string.IsNullOrEmpty(dto.Password))
         {
-            return BadRequest("Имя пользователя и пароль обязательны для заполнения");
+            return BadRequest("Логин и пароль обязательны для заполнения");
         }
 
         try
@@ -69,7 +67,7 @@ public class AuthController : ControllerBase
         catch (UserNotFoundException ex)
         {
             Console.WriteLine($"Ошибка входа: {ex.Message}\n{ex.StackTrace}");
-            return Unauthorized("Неверное имя пользователя или пароль");
+            return Unauthorized("Неверный логин или пароль");
         }
         catch (Exception ex)
         {

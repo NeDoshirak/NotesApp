@@ -4,5 +4,5 @@ namespace Infrastructure.Repositories.Interfaces;
 
 public interface ITaskRepository
 {
-    List<Domain.Entities.Task> GetAllByUserId(int userId);
+    List<Domain.Entities.Task> GetAllByUserId(Guid userId);
 }

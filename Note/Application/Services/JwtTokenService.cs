@@ -9,9 +9,7 @@ namespace Application.Services;
 
 public class JwtTokenService : IJwtTokenService
 {
-    private readonly string _jwtSecret;
-    private readonly string _issuer;
-    private readonly string _audience;
+    private readonly string _jwtSecret; private readonly string _issuer; private readonly string _audience;
 
     public JwtTokenService(string jwtSecret, string issuer, string audience)
     {
@@ -27,10 +25,10 @@ public class JwtTokenService : IJwtTokenService
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+        new Claim(JwtRegisteredClaimNames.UniqueName, user.Login),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
 
         var token = new JwtSecurityToken(
             issuer: _issuer,
@@ -41,4 +39,5 @@ public class JwtTokenService : IJwtTokenService
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
 }
