@@ -1,0 +1,3 @@
+"ConnectionStrings": {
+  "DefaultConnection": "Host=localhost;Port=5432;Database=notes_app;Username=postgres;Password=192837465qwe;"
+}
