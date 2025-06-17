@@ -11,6 +11,7 @@ public class Task
     public string Category { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public string? Location { get; set; }
+    public string? LocationName { get; set; }
     public DateTime? DueTime { get; set; }
     public bool IsCompleted { get; set; } = false;
 }

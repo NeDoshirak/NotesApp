@@ -32,6 +32,7 @@ public class TaskService : ITaskService
             Category = taskDto.Category,
             CreatedAt = DateTime.UtcNow,
             Location = taskDto.Location,
+            LocationName = taskDto.LocationName,
             DueTime = taskDto.DueTime,
             IsCompleted = taskDto.IsCompleted
         };
@@ -55,6 +56,7 @@ public class TaskService : ITaskService
             Category = task.Category,
             CreatedAt = task.CreatedAt,
             Location = task.Location,
+            LocationName = task.LocationName,
             DueTime = task.DueTime,
             IsCompleted = task.IsCompleted
         };
