@@ -1,6 +1,5 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
-using Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 
@@ -25,23 +24,15 @@ public class InputsController : ControllerBase
             if (request.UserId == Guid.Empty || string.IsNullOrEmpty(request.Text))
                 throw new ArgumentException("Valid user ID and text content are required.");
 
-            // Валидация геолокации
-            if (request.Latitude.HasValue && (request.Latitude < -90 || request.Latitude > 90))
-                throw new ArgumentException("Latitude must be between -90 and 90 degrees.");
-            if (request.Longitude.HasValue && (request.Longitude < -180 || request.Longitude > 180))
-                throw new ArgumentException("Longitude must be between -180 and 180 degrees.");
-
             var dto = new CreateInputDto
             {
                 UserId = request.UserId,
                 Text = request.Text,
-                FileName = "text.txt",
-                Latitude = request.Latitude,
-                Longitude = request.Longitude
+                FileName = "text.txt"
             };
 
             _inputService.SaveInput(dto);
-            return Ok(new { Message = "Text uploaded successfully", Latitude = dto.Latitude, Longitude = dto.Longitude });
+            return Ok(new { Message = "Text uploaded successfully" });
         }
         catch (Exception ex)
         {
@@ -61,11 +52,6 @@ public class InputsController : ControllerBase
             if (!request.WavFile.FileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("Only WAV files are allowed.");
 
-            if (request.Latitude.HasValue && (request.Latitude < -90 || request.Latitude > 90))
-                throw new ArgumentException("Latitude must be between -90 and 90 degrees.");
-            if (request.Longitude.HasValue && (request.Longitude < -180 || request.Longitude > 180))
-                throw new ArgumentException("Longitude must be between -180 and 180 degrees.");
-
             using var memoryStream = new MemoryStream();
             request.WavFile.CopyTo(memoryStream);
 
@@ -73,13 +59,11 @@ public class InputsController : ControllerBase
             {
                 UserId = request.UserId,
                 WavContent = memoryStream.ToArray(),
-                FileName = request.WavFile.FileName,
-                Latitude = request.Latitude,
-                Longitude = request.Longitude
+                FileName = request.WavFile.FileName
             };
 
             _inputService.SaveInput(dto);
-            return Ok(new { Message = "WAV file uploaded successfully", Latitude = dto.Latitude, Longitude = dto.Longitude });
+            return Ok(new { Message = "WAV file uploaded successfully" });
         }
         catch (Exception ex)
         {
