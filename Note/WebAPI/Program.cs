@@ -15,6 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Регистрация контроллеров
 builder.Services.AddControllers();
 
+// Регистрация HttpClient для использования в InputsController
+builder.Services.AddHttpClient();
+
 // Настройка CORS
 builder.Services.AddCors(options =>
 {
@@ -27,7 +30,7 @@ builder.Services.AddCors(options =>
 });
 
 // Регистрация зависимостей
-var uploadPath = Path.Combine(AppContext.BaseDirectory, "uploads");
+var uploadPath = Path.Combine(AppContext.BaseDirectory, "Uploads");
 builder.Services.AddSingleton(new DbConnectionFactory("Host=localhost;Port=5432;Database=notes_app;Username=postgres;"));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -69,7 +72,7 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Description = "Please enter JWT with Bearer into field",
+        Description = "Пожалуйста, введите JWT-токен с префиксом Bearer",
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
