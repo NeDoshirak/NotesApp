@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Заметки</title>
+</head>
+<body>
+    <h1>Добавить заметку</h1>
+
+    <textarea id="note" rows="4" cols="50" placeholder="Введите заметку..."></textarea><br>
+    <button onclick="sendNote()">Отправить</button>
+
+    <h2>Или загрузите WAV-файл:</h2>
+    <input type="file" id="audioFile" accept=".wav">
+    <button onclick="uploadAudio()">Распознать и отправить</button>
+
+    <pre id="result"></pre>
+
+    <script>
+        async function sendNote() {
+            const note = document.getElementById("note").value;
+            const response = await fetch("/parse_note", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ note })
+            });
+            const result = await response.json();
+            document.getElementById("result").textContent = JSON.stringify(result, null, 4);
+        }
+
+        async function uploadAudio() {
+            const fileInput = document.getElementById("audioFile");
+            const formData = new FormData();
+            formData.append("audio", fileInput.files[0]);
+
+            const res = await fetch("/upload_wav", { method: "POST", body: formData });
+            const data = await res.json();
+
+            if (data.transcribed_text) {
+                document.getElementById("note").value = data.transcribed_text;
+                    sendNote();
+            } else {
+                document.getElementById("result").textContent = "Ошибка распознавания: " + JSON.stringify(data);
+            }
+        }
+    </script>
+</body>
+</html>
