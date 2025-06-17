@@ -86,4 +86,18 @@ public class TaskRepository : ITaskRepository
 
         command.ExecuteNonQuery();
     }
+
+    public void UpdateTask(Domain.Entities.Task task)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+
+        using var command = new NpgsqlCommand(
+            "UPDATE tasks SET location = @location WHERE task_id = @task_id",
+            (NpgsqlConnection)connection);
+        command.Parameters.AddWithValue("location", (object?)task.Location ?? DBNull.Value);
+        command.Parameters.AddWithValue("task_id", task.TaskId);
+
+        command.ExecuteNonQuery();
+    }
 }

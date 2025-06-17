@@ -16,7 +16,7 @@ vosk_model = Model("vosk-model-small-ru-0.22")
 
 # === Настройки API ===
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-API_KEY = "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"
+API_KEY = "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"
 ffmpeg_path = f"ffmpeg/bin/ffmpeg.exe"
 
 current_date = datetime.now().strftime("%Y-%m-%d")

@@ -9,4 +9,5 @@ public interface ITaskService
     List<TaskDto> GetAllTasks(Guid userId);
     void CreateTask(TaskDto taskDto);
     void UpdateTaskCompletion(int taskId, bool isCompleted);
+    void UpdateTask(TaskDto taskDto);
 }

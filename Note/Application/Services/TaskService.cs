@@ -38,11 +38,31 @@ public class TaskService : ITaskService
         };
 
         _taskRepository.Create(task);
+        taskDto.TaskId = task.TaskId; // Обновляем TaskId в DTO
     }
 
     public void UpdateTaskCompletion(int taskId, bool isCompleted)
     {
         _taskRepository.UpdateIsCompleted(taskId, isCompleted);
+    }
+
+    public void UpdateTask(TaskDto taskDto)
+    {
+        var task = new Domain.Entities.Task
+        {
+            TaskId = taskDto.TaskId,
+            UserId = taskDto.UserId,
+            Name = taskDto.Name,
+            Text = taskDto.Text,
+            Category = taskDto.Category,
+            CreatedAt = taskDto.CreatedAt,
+            Location = taskDto.Location,
+            LocationName = taskDto.LocationName,
+            DueTime = taskDto.DueTime,
+            IsCompleted = taskDto.IsCompleted
+        };
+
+        _taskRepository.UpdateTask(task);
     }
 
     private TaskDto MapToTaskDto(Domain.Entities.Task task)
