@@ -73,32 +73,23 @@ public class InputsController : ControllerBase
         }
     }
 
-    [HttpPost("wav")]
-    public async Task<IActionResult> UploadWav([FromForm] CreateInputRequest request)
+    [HttpPost("audio")]
+    public async Task<IActionResult> UploadAudio([FromForm] CreateInputRequest request)
     {
         try
         {
             if (request.UserId == Guid.Empty || request.WavFile == null)
-                throw new ArgumentException("Valid user ID and WAV file are required.");
+                throw new ArgumentException("Valid user ID and audio file are required.");
 
-            if (!request.WavFile.FileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("Only WAV files are allowed.");
+            using var form = new MultipartFormDataContent();
+            using var stream = request.WavFile.OpenReadStream();
+            using var content = new StreamContent(stream);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.WavFile.ContentType);
 
-            // For WAV files, we'll assume the Flask API accepts base64-encoded content
-            using var memoryStream = new MemoryStream();
-            await request.WavFile.CopyToAsync(memoryStream);
-            var wavBytes = memoryStream.ToArray();
-            var base64Wav = Convert.ToBase64String(wavBytes);
+            form.Add(content, "audio", request.WavFile.FileName);
 
-            // Prepare JSON payload for Flask API
-            var payload = new { note = base64Wav };
-            var jsonContent = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8,
-                "application/json");
+            var response = await _httpClient.PostAsync("http://localhost:5000/upload_wav", form);
 
-            // Send request to Flask API
-            var response = await _httpClient.PostAsync(FlaskApiUrl, jsonContent);
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -110,24 +101,25 @@ public class InputsController : ControllerBase
                 });
             }
 
-            // Parse successful response
             var responseContent = await response.Content.ReadAsStringAsync();
             var parsedJson = JsonSerializer.Deserialize<object>(responseContent);
 
-            // Optionally save to local service
+            using var memoryStream = new MemoryStream();
+            await request.WavFile.CopyToAsync(memoryStream);
+
             var dto = new CreateInputDto
             {
                 UserId = request.UserId,
-                WavContent = wavBytes,
+                WavContent = memoryStream.ToArray(),
                 FileName = request.WavFile.FileName
             };
             _inputService.SaveInput(dto);
 
-            return Ok(new { Message = "WAV file processed successfully", ParsedData = parsedJson });
+            return Ok(new { Message = "Audio file processed successfully", ParsedData = parsedJson });
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка загрузки WAV: {ex.Message}\n{ex.StackTrace}");
+            Console.WriteLine($"Audio upload error: {ex.Message}\n{ex.StackTrace}");
             return BadRequest(new { Error = ex.Message });
         }
     }

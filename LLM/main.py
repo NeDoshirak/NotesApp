@@ -1,9 +1,11 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 import os
 import requests
 import json
 from vosk import Model, KaldiRecognizer
 import wave
+import subprocess
+import tempfile
 from datetime import datetime
 from flasgger import Swagger
 
@@ -14,7 +16,8 @@ vosk_model = Model("vosk-model-small-ru-0.22")
 
 # === Настройки API ===
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-API_KEY = "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"
+API_KEY = "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"
+ffmpeg_path = f"ffmpeg-2025-06-16-git-e6fb8f373e-full_build/bin/ffmpeg.exe"
 
 current_date = datetime.now().strftime("%Y-%m-%d")
 current_time = datetime.now().strftime("%H:%M")
@@ -63,6 +66,7 @@ def process_with_api(text):
     }
     return requests.post(API_URL, headers=headers, json=data)
 
+
 @app.route("/upload_wav", methods=["POST"])
 def process():
     """
@@ -77,7 +81,7 @@ def process():
            in: formData
            type: file
            required: false
-           description: WAV-файл (PCM 16bit mono)
+           description: WAV-файл (любой формат аудио)
          - name: text
            in: body
            required: false
@@ -101,10 +105,11 @@ def process():
            description: Ошибка в запросе
          500:
            description: Ошибка сервера или API
-       """
+    """
     content_type = request.headers.get('Content-Type', '').lower()
 
     if 'text/plain' in content_type or 'application/json' in content_type:
+        # Обработка текстового ввода
         try:
             text = request.json.get('text', '') if request.is_json else request.data.decode('utf-8')
             if not text.strip():
@@ -114,22 +119,27 @@ def process():
             return jsonify({"error": f"Text processing error: {str(e)}"}), 400
 
     elif 'multipart/form-data' in content_type:
+        # Обработка аудио с автоконвертацией
         if 'audio' not in request.files:
             return jsonify({"error": "Нет файла 'audio' в запросе"}), 400
 
         audio_file = request.files['audio']
-        temp_file = "temp_audio.wav"
-
+        # Создание временных файлов
+        temp_input = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(audio_file.filename)[1])
+        temp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         try:
-            audio_file.save(temp_file)
+            audio_file.save(temp_input.name)
+            temp_input.close()
+            temp_output.close()
+            # Конвертация через ffmpeg в PCM 16bit mono WAV
+            subprocess.run([
+                ffmpeg_path, "-y", "-i", temp_input.name,
+                "-ac", "1", "-ar", "16000", "-sample_fmt", "s16",
+                temp_output.name
+            ], check=True)
 
-            # Проверка WAV
-            with wave.open(temp_file, "rb") as wf:
-                if (wf.getnchannels() != 1 or
-                        wf.getsampwidth() != 2 or
-                        wf.getcomptype() != "NONE"):
-                    return jsonify({"error": "WAV должен быть PCM 16bit mono"}), 400
-
+            # Чтение конвертированного WAV
+            with wave.open(temp_output.name, "rb") as wf:
                 rec = KaldiRecognizer(vosk_model, wf.getframerate())
                 rec.SetWords(True)
                 result_text = ""
@@ -143,20 +153,27 @@ def process():
 
                 result_text += json.loads(rec.FinalResult()).get("text", "")
 
-            os.remove(temp_file)
+            # Удаление временных файлов
+            os.remove(temp_input.name)
+            os.remove(temp_output.name)
 
             if not result_text.strip():
                 return jsonify({"error": "Пустой результат распознавания"}), 400
 
             response = process_with_api(result_text)
 
+        except subprocess.CalledProcessError as e:
+            return jsonify({"error": f"Audio conversion failed: {str(e)}"}), 500
         except Exception as e:
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
+            # Очистка при ошибке
+            if os.path.exists(temp_input.name): os.remove(temp_input.name)
+            if os.path.exists(temp_output.name): os.remove(temp_output.name)
             return jsonify({"error": f"Audio processing error: {str(e)}"}), 400
-    else:
-        return jsonify({"error": "Unsupported Content-Type. Use text/plain or audio/wav"}), 400
 
+    else:
+        return jsonify({"error": "Unsupported Content-Type. Use text/plain or audio file"}), 400
+
+    # Обработка ответа API
     if response.status_code == 200:
         try:
             content = response.json()['choices'][0]['message']['content']
@@ -181,6 +198,7 @@ def process():
             "status_code": response.status_code,
             "response_text": response.text
         }), response.status_code
+
 
 @app.route("/parse_note", methods=["POST"])
 def parse_note():
@@ -216,13 +234,10 @@ def parse_note():
 
         response = process_with_api(user_input)
         if response.status_code == 200:
-            result = response.json()
-            content = result['choices'][0]['message']['content']
-
-            json_start = content.find('{')
-            json_end = content.rfind('}') + 1
-            clean_json = content[json_start:json_end]
-
+            result = response.json()['choices'][0]['message']['content']
+            json_start = result.find('{')
+            json_end = result.rfind('}') + 1
+            clean_json = result[json_start:json_end]
             parsed_json = json.loads(clean_json)
             return jsonify(parsed_json)
         else:
@@ -230,9 +245,6 @@ def parse_note():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/")
-def index():
-    return render_template("index.html")
 
 if __name__ == "__main__":
     swagger = Swagger(app)
