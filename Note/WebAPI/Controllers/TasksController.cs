@@ -1,7 +1,9 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
+using Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
+
 
 namespace Presentation.Web.Controllers;
 
@@ -50,7 +52,3 @@ public class TasksController : ControllerBase
     }
 }
 
-public class UpdateTaskCompletionDto
-{
-    public bool IsCompleted { get; set; }
-}

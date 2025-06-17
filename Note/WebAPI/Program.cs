@@ -102,6 +102,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Notes Web API v1"));
 }
 
+app.Urls.Add("http://0.0.0.0:5000");
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();

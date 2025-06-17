@@ -38,7 +38,7 @@ public class TaskService : ITaskService
         };
 
         _taskRepository.Create(task);
-        taskDto.TaskId = task.TaskId; // Обновляем TaskId в DTO
+        taskDto.TaskId = task.TaskId; 
     }
 
     public void UpdateTaskCompletion(int taskId, bool isCompleted)

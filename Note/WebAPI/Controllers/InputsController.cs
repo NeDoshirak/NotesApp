@@ -1,5 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
+using Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Concurrent;
@@ -191,44 +192,4 @@ public class InputsController : ControllerBase
     }
 }
 
-public class CreateInputRequest
-{
-    public Guid UserId { get; set; }
-    public string? Text { get; set; }
-    public IFormFile? AudioFile { get; set; }
-}
 
-public class LocationDto
-{
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-}
-
-public class FlaskErrorResponse
-{
-    public string? Error { get; set; }
-    public int? StatusCode { get; set; }
-    public string? ResponseText { get; set; }
-}
-
-public class FlaskAudioResponse
-{
-    [JsonPropertyName("transcribed_text")]
-    public string TranscribedText { get; set; } = string.Empty;
-    [JsonPropertyName("result")]
-    public ParsedData Result { get; set; } = null!;
-}
-
-public class ParsedData
-{
-    [JsonPropertyName("category")]
-    public string Category { get; set; } = string.Empty;
-    [JsonPropertyName("date_time")]
-    public string? DateTime { get; set; }
-    [JsonPropertyName("location")]
-    public string? Location { get; set; }
-    [JsonPropertyName("text")]
-    public string Text { get; set; } = string.Empty;
-    [JsonPropertyName("title")]
-    public string Title { get; set; } = string.Empty;
-}
