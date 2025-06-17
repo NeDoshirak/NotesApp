@@ -2,8 +2,9 @@
 using Infrastructure.Data;
 using Infrastructure.Repositories.Interfaces;
 using Npgsql;
-using System.Data;
+using System;
 using System.Collections.Generic;
+using System.Data;
 
 namespace Infrastructure.Repositories;
 
@@ -23,7 +24,7 @@ public class TaskRepository : ITaskRepository
         connection.Open();
 
         using var command = new NpgsqlCommand(
-            "SELECT task_id, user_id, name, text, category, created_at, location, due_time " +
+            "SELECT task_id, user_id, name, text, category, created_at, location, due_time, is_completed " +
             "FROM tasks WHERE user_id = @userId",
             (NpgsqlConnection)connection);
         command.Parameters.AddWithValue("userId", userId);
@@ -40,11 +41,47 @@ public class TaskRepository : ITaskRepository
                 Category = reader.GetString(4),
                 CreatedAt = reader.GetDateTime(5),
                 Location = reader.IsDBNull(6) ? null : reader.GetString(6),
-                DueTime = reader.IsDBNull(7) ? null : reader.GetDateTime(7)
+                DueTime = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+                IsCompleted = reader.GetBoolean(8)
             });
         }
 
         return tasks;
     }
 
+    public void Create(Domain.Entities.Task task)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+
+        using var command = new NpgsqlCommand(
+            "INSERT INTO tasks (user_id, name, text, category, created_at, location, due_time, is_completed) " +
+            "VALUES (@user_id, @name, @text, @category, @created_at, @location, @due_time, @is_completed) RETURNING task_id",
+            (NpgsqlConnection)connection);
+        command.Parameters.AddWithValue("user_id", task.UserId);
+        command.Parameters.AddWithValue("name", task.Name);
+        command.Parameters.AddWithValue("text", (object?)task.Text ?? DBNull.Value);
+        command.Parameters.AddWithValue("category", task.Category);
+        command.Parameters.AddWithValue("created_at", task.CreatedAt);
+        command.Parameters.AddWithValue("location", (object?)task.Location ?? DBNull.Value);
+        command.Parameters.AddWithValue("due_time", (object?)task.DueTime ?? DBNull.Value);
+        command.Parameters.AddWithValue("is_completed", task.IsCompleted);
+
+        var taskId = (int)command.ExecuteScalar();
+        task.TaskId = taskId;
+    }
+
+    public void UpdateIsCompleted(int taskId, bool isCompleted)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+
+        using var command = new NpgsqlCommand(
+            "UPDATE tasks SET is_completed = @is_completed WHERE task_id = @task_id",
+            (NpgsqlConnection)connection);
+        command.Parameters.AddWithValue("is_completed", isCompleted);
+        command.Parameters.AddWithValue("task_id", taskId);
+
+        command.ExecuteNonQuery();
+    }
 }

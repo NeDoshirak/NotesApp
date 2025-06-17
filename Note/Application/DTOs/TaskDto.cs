@@ -1,4 +1,6 @@
-﻿namespace Application.DTOs;
+﻿using System;
+
+namespace Application.DTOs;
 
 public class TaskDto
 {
@@ -10,4 +12,5 @@ public class TaskDto
     public DateTime CreatedAt { get; set; }
     public string? Location { get; set; }
     public DateTime? DueTime { get; set; }
+    public bool IsCompleted { get; set; } = false;
 }

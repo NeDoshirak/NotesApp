@@ -2,6 +2,8 @@
 using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Repositories.Interfaces;
+using System;
+using System.Collections.Generic;
 
 namespace Application.Services;
 
@@ -20,6 +22,28 @@ public class TaskService : ITaskService
         return tasks.Select(MapToTaskDto).ToList();
     }
 
+    public void CreateTask(TaskDto taskDto)
+    {
+        var task = new Domain.Entities.Task
+        {
+            UserId = taskDto.UserId,
+            Name = taskDto.Name,
+            Text = taskDto.Text,
+            Category = taskDto.Category,
+            CreatedAt = DateTime.UtcNow,
+            Location = taskDto.Location,
+            DueTime = taskDto.DueTime,
+            IsCompleted = taskDto.IsCompleted
+        };
+
+        _taskRepository.Create(task);
+    }
+
+    public void UpdateTaskCompletion(int taskId, bool isCompleted)
+    {
+        _taskRepository.UpdateIsCompleted(taskId, isCompleted);
+    }
+
     private TaskDto MapToTaskDto(Domain.Entities.Task task)
     {
         return new TaskDto
@@ -31,7 +55,8 @@ public class TaskService : ITaskService
             Category = task.Category,
             CreatedAt = task.CreatedAt,
             Location = task.Location,
-            DueTime = task.DueTime
+            DueTime = task.DueTime,
+            IsCompleted = task.IsCompleted
         };
     }
 }

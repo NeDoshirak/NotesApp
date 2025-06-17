@@ -12,6 +12,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Регистрация контроллеров
 builder.Services.AddControllers();
 
 // Настройка CORS
@@ -25,21 +26,23 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Убедитесь, что строка подключения соответствует вашей БД
+// Регистрация зависимостей
+var uploadPath = Path.Combine(AppContext.BaseDirectory, "uploads");
 builder.Services.AddSingleton(new DbConnectionFactory("Host=localhost;Port=5432;Database=notes_app;Username=postgres;"));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>(
-    sp => new JwtTokenService(
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>(sp =>
+    new JwtTokenService(
         builder.Configuration["Jwt:Secret"],
         builder.Configuration["Jwt:Issuer"],
         builder.Configuration["Jwt:Audience"]));
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITaskService, TaskService>();
-builder.Services.AddScoped<IInputService, InputService>(
-    sp => new InputService(Path.Combine(builder.Environment.WebRootPath, "uploads")));
+builder.Services.AddScoped<IInputService, InputService>(sp =>
+    new InputService(uploadPath));
 
+// Настройка JWT-аутентификации
 var jwtSecret = builder.Configuration["Jwt:Secret"];
 var issuer = builder.Configuration["Jwt:Issuer"];
 var audience = builder.Configuration["Jwt:Audience"];
@@ -58,6 +61,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Настройка Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -88,6 +92,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Настройка middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
