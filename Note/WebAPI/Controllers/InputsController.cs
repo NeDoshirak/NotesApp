@@ -3,7 +3,6 @@ using Application.Interfaces;
 using Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -19,7 +18,7 @@ public class InputsController : ControllerBase
 {
     private readonly ITaskService _taskService;
     private readonly HttpClient _httpClient;
-    private static readonly ConcurrentDictionary<Guid, (int TaskId, Guid UserId)> _pendingNotes = new();
+    // private static readonly ConcurrentDictionary<Guid, (int TaskId, Guid UserId)> _pendingNotes = new();
     private const string FlaskApiUrl = "http://localhost:5000";
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -115,26 +114,26 @@ public class InputsController : ControllerBase
     }
 
     [HttpPost("location/{noteId}")]
-    public IActionResult SubmitLocation(Guid noteId, [FromBody] LocationDto location)
+    public IActionResult SubmitLocation(int noteId, [FromQuery] Guid userId, [FromBody] LocationDto location)
     {
         try
         {
+            if (noteId <= 0)
+                throw new ArgumentException("Note ID must be a positive integer.");
+            if (userId == Guid.Empty)
+                throw new ArgumentException("Valid user ID is required.");
             if (location.Latitude < -90 || location.Latitude > 90)
                 throw new ArgumentException("Latitude must be between -90 and 90 degrees.");
             if (location.Longitude < -180 || location.Longitude > 180)
                 throw new ArgumentException("Longitude must be between -180 and 180 degrees.");
 
-            if (!_pendingNotes.TryRemove(noteId, out var pendingNote))
-                throw new ArgumentException("Note not found or already processed.");
-
-            var taskId = pendingNote.TaskId;
-            var userId = pendingNote.UserId;
-            var locationWithCoords = $"Стоматологическая клиника ({location.Latitude}, {location.Longitude})";
-
             var tasks = _taskService.GetAllTasks(userId);
-            var task = tasks.FirstOrDefault(t => t.TaskId == taskId);
+            var task = tasks.FirstOrDefault(t => t.TaskId == noteId);
             if (task == null)
-                throw new ArgumentException("Task not found.");
+                throw new ArgumentException("Task not found or does not belong to the user.");
+
+            var locationName = string.IsNullOrEmpty(task.LocationName) ? "" : task.LocationName;
+            var locationWithCoords = $"{locationName} ({location.Latitude}, {location.Longitude})".Trim();
 
             task.Location = locationWithCoords;
             _taskService.UpdateTask(task);
@@ -177,12 +176,10 @@ public class InputsController : ControllerBase
 
         if (!string.IsNullOrEmpty(data.Location))
         {
-            var noteId = Guid.NewGuid();
-            _pendingNotes.TryAdd(noteId, (taskDto.TaskId, userId));
             return Ok(new
             {
                 Message = "Location required",
-                NoteId = noteId,
+                NoteId = taskDto.TaskId,
                 ParsedData = data,
                 Action = "Request user to provide coordinates"
             });
@@ -191,5 +188,3 @@ public class InputsController : ControllerBase
         return Ok(new { Message = "Task created successfully", Task = taskDto });
     }
 }
-
-
